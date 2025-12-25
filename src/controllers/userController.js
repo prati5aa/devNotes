@@ -1,15 +1,63 @@
 import mongoose from 'mongoose';
-import User from '../models/user';
+import bcrypt from 'bcryptjs';
+import User from '../models/user.js';
+import dotenv from 'dotenv';
+dotenv.config();
+ 
+import jwt from 'jsonwebtoken';
+
 
 const createUser = async (req, res) => {
     try{
         const { username, email, password, roles } = req.body;
-        const newUser = new User({ username, email, password, roles });
+        
+        if(username== await User.findOne({username})){
+            return res.status(400).json({ message: 'Username already exists' });
+        }
+
+        // This is much cleaner and avoids the "callback hell"
+const salt = await bcrypt.genSalt(10);
+const hashedPassword = await bcrypt.hash(password, salt);
+
+// Now hashedPassword is ready to be saved to the database
+
+
+        const newUser = new User({ username, email, password: hashedPassword, roles });
         await newUser.save();
-        res.status(201).json({ message: 'User createdd succesfully', user: newUser });  
+        const token= jwt.sign(
+            { id: newUser._id, roles: newUser.roles },
+            process.env.JWT_SECRET,)
+            console.log("Generated JWT Token:", token);
+        res.status(201).json({ message: 'User created succesfully', user: newUser });  
+    
+  
     } catch (error) {
         res.status(500).json({ message: 'Error creating user', error: error.message }); 
     }
 };
 
-export { createUser };
+const loginUser=async(req,res)=>{
+try{
+    const {email,password}=req.body;
+    const user=await User.findOne({email});
+    if(!user){
+        return res.status(400).json({message:"Invalid username or password"});
+    }
+
+    bcrypt.compare(password,user.password, function(err,result){
+        if(result){
+            let token=jwt.sign({email:user.email},process.env.JWT_SECRET);
+            res.json({token:token});
+            res.send("Login successful");
+        }else{
+            res.status(400).json({message:"Invalid username or password"});
+        }
+});
+    }catch(error){
+    res.status(500).json({message:"Error logging in user",error:error.message});
+}
+};
+
+
+
+export { createUser,loginUser };
