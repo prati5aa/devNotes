@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 import {dbconnect} from '../config/dbconnect.js';
 import userRoutes from './routes/user.route.js';
+import noteRoutes from './routes/note.route.js';
+
 const app=express();
 
 dbconnect();
@@ -19,7 +21,7 @@ app.get("/",(req,res)=>{
 
 // Route organization
 app.use('/api/users',userRoutes );
-// app.use('/api/notes', require('./routes/noteRoutes'));
+ app.use('/api/notes', noteRoutes);
 // app.use('/api/auth', require('./routes/authRoutes'));
 
 const PORT = process.env.PORT || 5000;

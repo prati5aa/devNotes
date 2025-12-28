@@ -24,11 +24,9 @@ const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = new User({ username, email, password: hashedPassword, roles });
         await newUser.save();
-        const token= jwt.sign(
-            { id: newUser._id, roles: newUser.roles },
-            process.env.JWT_SECRET,)
+        let token=jwt.sign({ userId: newUser._id.toString(),email:newUser.email},process.env.JWT_SECRET);
             console.log("Generated JWT Token:", token);
-        res.status(201).json({ message: 'User created succesfully', user: newUser });  
+        res.status(201).json({ message: 'User created succesfully', token });  
     
   
     } catch (error) {
@@ -46,9 +44,9 @@ try{
 
     bcrypt.compare(password,user.password, function(err,result){
         if(result){
-            let token=jwt.sign({email:user.email},process.env.JWT_SECRET);
+            let token=jwt.sign({ userId: user._id.toString(),email:user.email},process.env.JWT_SECRET);
             res.json({token:token});
-            res.send("Login successful");
+          
         }else{
             res.status(400).json({message:"Invalid username or password"});
         }
@@ -58,6 +56,11 @@ try{
 }
 };
 
+const logout =async(req,res)=>{
+    // Logout logic can be implemented here if needed
+    res.redirect('/login');
+    res.send("Logout successful");
+}
 
 
 export { createUser,loginUser };
