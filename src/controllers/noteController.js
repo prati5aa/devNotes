@@ -1,11 +1,12 @@
 import Note from '../models/notes.js';
 import mongoose from 'mongoose';
 import authMiddleware from '../middleware/auth.js';
+import User from '../models/user.js';
 
 const createNote=async (req,res)=>{
     try{
 
-        const {title,content,tags=[],isPublic,}=req.body
+        const {title,content,tags=[],isPublic}=req.body
         const note= new Note({
             title,
             content,
@@ -14,6 +15,10 @@ const createNote=async (req,res)=>{
             isPublic
         });
         await note.save();
+
+        const user=await User.findById(req.userId);
+        user.noteIds.push(note._id);
+        await user.save();
         res.status(201).json({message:"Note created successfully",note});
     }catch(error){
         res.status(500).json({message:"Error creating note",error:error.message});

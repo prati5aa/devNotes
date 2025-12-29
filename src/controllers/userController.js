@@ -22,9 +22,9 @@ const hashedPassword = await bcrypt.hash(password, salt);
 // Now hashedPassword is ready to be saved to the database
 
 
-        const newUser = new User({ username, email, password: hashedPassword, roles });
-        await newUser.save();
-        let token=jwt.sign({ userId: newUser._id.toString(),email:newUser.email},process.env.JWT_SECRET);
+        const user = new User({ username, email, password: hashedPassword, roles });
+        await user.save();
+        let token=jwt.sign({ userId: user._id.toString(),email:user.email},process.env.JWT_SECRET);
             console.log("Generated JWT Token:", token);
         res.status(201).json({ message: 'User created succesfully', token });  
     
@@ -62,5 +62,17 @@ const logout =async(req,res)=>{
     res.send("Logout successful");
 }
 
+const profile=async(req,res)=>{
+    try{
+        const userId=req.userId;
+        const user=await User.findById(userId).select('-password');
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+        res.json({user});
+    }catch(error){
+        res.status(500).json({message:"Error fetching user profile",error:error.message});
+    }
+}
 
-export { createUser,loginUser };
+export { createUser,loginUser, logout, profile };
